@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/style-shortcuts.css">
 </head>
 <body class="flex-column center">
+
     <div class="flex-column center">
         <form class="flex-column center" name="range" action="/modalitat1.php" method="POST">
             <button type="submit" name="facil">RANG: 1 - 10</button>
@@ -17,28 +18,74 @@
                 <?php
                     if (session_status() != PHP_SESSION_ACTIVE) session_start();
                     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                        if (isset($_POST['facil'])) {
-                            $_POST[]
-                        } elseif(isset($_POST['normal']))){
+
+
+                        
+                        if(!empty($_SESSION["max"])){
+                            echo "max";
+                            $userPost = "";
+                            if(isset($_POST["rang"])){
+                                $userPost = $_POST["rang"];
+                            } else {
+                                $userPost = false;
+                            }
+
+                            echo $userPost;
+
+                            if(isset($_POST["facil"]) || isset($_POST["normal"]) || isset($_POST["dificil"])){
+                                echo "Ja hi ha un numero iniciat.";
+                            } else {
+                                guessType($userPost);
+                                echo "<span> El numero secret es " . $_SESSION["val"] . "</span>";
+                            }
                             
-                        } elseif(isset($_POST['dificil']))){
-                            
+                        } else {
+                            echo "entrada";
+                            $_SESSION["min"] = 0;
+                            if (isset($_POST['facil'])) {
+                                echo "facil";
+                                $_SESSION["max"] = 10;
+                            } elseif(isset($_POST['normal'])){
+                                echo "normal";
+                                $_SESSION["max"] = 50;
+                            } elseif(isset($_POST['dificil'])){
+                                echo "dificil";
+                                $_SESSION["max"] = 100;
+                            }
                         }
 
-                        if (isset($_POST['major'])) {
-                            
-                        } elseif(isset($_POST['menor']))){
-                            
-                        } elseif(isset($_POST['igual']))){
-                            
+
+                    }
+
+                    function guessType($operator){
+                        if($operator){
+                            $_SESSION["val"] = guessNumber($_SESSION["min"], $_SESSION["max"]);
+                        } else {
+                            if($operator == "+"){
+                                $_SESSION["min"] = $_SESSION["val"];
+                                $_SESSION["val"] = guessNumber($_SESSION["min"], $_SESSION["max"]); 
+                            } elseif($operator == "-") {
+                                $_SESSION["max"] = $_SESSION["val"]; 
+                                $_SESSION["val"] = guessNumber($_SESSION["min"], $_SESSION["max"]);
+                            } else {
+                                unset($_SESSION["max"]);
+                            }
+
+                            if($_SESSION["val"] == $_SESSION["max"] && $_SESSION["val"] == $_SESSION["min"]) {
+                                unset($_SESSION["max"]);   
+                            }
                         }
 
                     }
+
+                    function guessNumber($min, $max){
+                        return ($max - $min / 2);
+                    }
                 ?>
             </div>
-            <button type="submit" name="major" >ES MAJOR</button>
-            <button type="submit" name="menor" >ES MENOR</button>
-            <button type="submit" name="igual" >ES EL NUMERO</button>
+            <button type="submit" name="rang" value="+">ES MAJOR</button>
+            <button type="submit" name="rang" value="-">ES MENOR</button>
+            <button type="submit" name="rang" value="=">ES EL NUMERO</button>
         </form>
 
     </div>
