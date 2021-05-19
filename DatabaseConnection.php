@@ -1,3 +1,4 @@
+  
 <?php
 include_once 'DB.php';
 
@@ -8,13 +9,15 @@ include_once 'DB.php';
  */
 
 abstract class DatabaseConnection implements DB {
-    protected string $servername;
-    protected string $username;
-    protected string $password;
+    protected $servername;
+    protected $username;
+    protected $password;
+    protected $dbname;
     protected $connection;
 
-    function __construct($servername, $username, $password) {
+    function __construct($servername, $username, $password, $dbname) {
         $this->servername = $servername;
+        $this->dbname = $dbname;
         $this->username = $username;
         $this->password = $password;
     }

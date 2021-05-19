@@ -11,83 +11,59 @@
 
     <div class="flex-column center">
         <form class="flex-column center" name="range" action="/modalitat1.php" method="POST">
-            <button type="submit" name="facil">RANG: 1 - 10</button>
-            <button type="submit" name="normal">RANG: 1 - 50</button>
-            <button type="submit" name="dificil">RANG: 1 - 100</button>
-            <div class="flex-row center">
+            <div class="box blue"></div>
+            <div class="box yellow"></div>
+            <div class="box pink"></div>
+            <div class="box mash"></div>
+
+            <div class="flex-row center tipus">
+                <button type="submit" name="dificultat" value=10>RANG: 1 - 10</button>
+                <button type="submit" name="dificultat" value=50>RANG: 1 - 50</button>
+                <button type="submit" name="dificultat" value=100>RANG: 1 - 100</button>
+            </div>
+
+            <div class="flex-column center text">
                 <?php
+                    require_once('GuessNumber.php');
+                    require_once('GuessNumberModalidad1.php');
+                    require_once('DatabaseOOP.php');
                     if (session_status() != PHP_SESSION_ACTIVE) session_start();
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $call = "";
+                    if(!empty($_SESSION["modalitat1"])) $guess = unserialize($_SESSION["modalitat1"]);
 
-
+                    if(isset($_POST["dificultat"])){
+                        if(empty($guess)) $guess = new GuessNumberModalidad1(1, $_POST["dificultat"]);
+                        else $guess->newGame(1, $_POST["dificultat"]);
+                        $guess->guessType(false);
+                        $call = "Partida començada! Rang seleccionat: 1 - " . $_POST["dificultat"] . "\n" . "El numero podria ser aquest: " . $guess->getVal();
+                        $_SESSION["modalitat1"] = serialize($guess);
+                    }
+                    
+                    if(isset($_POST["rang"]) && !empty($guess)){
+                        $guess->guessType($_POST["rang"]);
+                        if($guess->getStatus() != true){
+                            $call = "El numero podria ser aquest: " . $guess->getVal();
+                            $guess->updateTries();
+                        } else {
+                            $call = "Has guanyat aquesta partida!";
+                            $db = new DatabaseOOP("127.0.0.1", "root", "root", "guessmynumber");
+                            $db->connect();
+                            $db->insert("Modalitat 1", $guess->getNivell(), $guess->getTries());
+                            $db->close();
+                        } 
                         
-                        if(!empty($_SESSION["max"])){
-                            echo "max";
-                            $userPost = "";
-                            if(isset($_POST["rang"])){
-                                $userPost = $_POST["rang"];
-                            } else {
-                                $userPost = false;
-                            }
-
-                            echo $userPost;
-
-                            if(isset($_POST["facil"]) || isset($_POST["normal"]) || isset($_POST["dificil"])){
-                                echo "Ja hi ha un numero iniciat.";
-                            } else {
-                                guessType($userPost);
-                                echo "<span> El numero secret es " . $_SESSION["val"] . "</span>";
-                            }
-                            
-                        } else {
-                            echo "entrada";
-                            $_SESSION["min"] = 0;
-                            if (isset($_POST['facil'])) {
-                                echo "facil";
-                                $_SESSION["max"] = 10;
-                            } elseif(isset($_POST['normal'])){
-                                echo "normal";
-                                $_SESSION["max"] = 50;
-                            } elseif(isset($_POST['dificil'])){
-                                echo "dificil";
-                                $_SESSION["max"] = 100;
-                            }
-                        }
-
-
+                        $_SESSION["modalitat1"] = serialize($guess);
                     }
-
-                    function guessType($operator){
-                        if($operator){
-                            $_SESSION["val"] = guessNumber($_SESSION["min"], $_SESSION["max"]);
-                        } else {
-                            if($operator == "+"){
-                                $_SESSION["min"] = $_SESSION["val"];
-                                $_SESSION["val"] = guessNumber($_SESSION["min"], $_SESSION["max"]); 
-                            } elseif($operator == "-") {
-                                $_SESSION["max"] = $_SESSION["val"]; 
-                                $_SESSION["val"] = guessNumber($_SESSION["min"], $_SESSION["max"]);
-                            } else {
-                                unset($_SESSION["max"]);
-                            }
-
-                            if($_SESSION["val"] == $_SESSION["max"] && $_SESSION["val"] == $_SESSION["min"]) {
-                                unset($_SESSION["max"]);   
-                            }
-                        }
-
-                    }
-
-                    function guessNumber($min, $max){
-                        return ($max - $min / 2);
-                    }
+                    
                 ?>
+
+                <div><?php echo $call; ?></div>
             </div>
             <button type="submit" name="rang" value="+">ES MAJOR</button>
             <button type="submit" name="rang" value="-">ES MENOR</button>
             <button type="submit" name="rang" value="=">ES EL NUMERO</button>
         </form>
-
+        <button onClick="window.history.back()">Enderrera</button>
     </div>
 </body>
 </html>

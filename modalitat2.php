@@ -9,55 +9,58 @@
 </head>
 <body class="flex-column center">
     <?php
+        require_once('GuessNumber.php');
+        require_once('GuessNumberModalidad2.php');
+        require_once('DatabaseOOP.php');
         if (session_status() != PHP_SESSION_ACTIVE) session_start();
         $result = "";
-        if(!empty($_POST["min"]) AND !empty($_POST["max"])){
-            $_SESSION["min"] = $_POST["min"];
-            $_SESSION["max"] = $_POST["max"];
-            
-            //$_SESSION[$_POST["min"] . "," . $_POST["max"]] = (!is_null($_SESSION[$_POST["min"] . "," . $_POST["max"]])) ? ($_SESSION[$_POST["min"] . "," . $_POST["max"]] + 1) : 1;
-            $_SESSION["current"] = rand($_SESSION["min"], $_SESSION["max"]);
-        }
+        if(!empty($_SESSION["modalitat2"])) $guess = unserialize($_SESSION["modalitat2"]);
 
-        if(!empty($_POST["guess"])){
-            if( !is_null($_SESSION["min"]) && !is_null($_SESSION["max"])){
-                if($_POST["guess"] == $_SESSION["current"]){
-                    $result = "HAS ADIVINAT EL NUMERO!";
-                    $_SESSION["min"] = null;
-                    $_SESSION["max"] = null;
+        if(isset($_POST["submit"])){
+            if($_POST["submit"] == "start" && isset($_POST["min"]) && isset($_POST["max"])){
+                if(empty($guess)){
+                    $guess = new GuessNumberModalidad2($_POST["min"], $_POST["max"]);
+                    $guess->generateNumber();
                 } else {
-                    if($_POST["guess"] < $_SESSION["current"]){
-                        $result = "ES MAJOR QUE EL NUMERO: " . $_POST["guess"];
-                    }
-    
-                    if($_POST["guess"] > $_SESSION["current"]){
-                        $result = "ES MENOR QUE EL NUMERO: " . $_POST["guess"];
-                    }
+                    echo "has ganao";
+                    $guess->newGame($_POST["min"], $_POST["max"]);
+                    $guess->generateNumber();
                 }
-
+            } else if($_POST["submit"] == "guess" && isset($_POST["guess"])){
+                $result = $guess->getUserValue($_POST["guess"]);
+                $guess->updateTries();
+                if($result == "Has acertat el numero!") {
+                    $db = new DatabaseOOP("127.0.0.1", "root", "root", "guessmynumber");
+                    $db->connect();
+                    $db->insert("Modalitat 2", $guess->getNivell(), $guess->getTries());
+                    $db->close();
+                }
             }
+
+            if(!empty($guess))$_SESSION["modalitat2"] = serialize($guess);
         }
+        
     ?>
 
     <div class="flex-column center">
-        <form class="flex-column center" name="range" action="/modalitat2.php" method="POST">
+        <form class="flex-column center type2" name="range" action="/modalitat2.php" method="POST">
             <div class="flex-row center">
                 <label for="max">Numero mes baix</label>
                 <input id="min" name="min" type="number">
                 <label for="max">Numero mes alt</label>
                 <input id="max" name="max" type="number">
             </div>
-            <button type="submit" id="start">START</button>
+            <button type="submit" name="submit" value="start">START</button>
         </form>
 
     </div>
     <div class="flex-column center">
-        <span><?php echo $result; ?></span>
+        <span class="text flex-column center"><?php echo $result; ?></span>
         <form class="flex-row center" action="/modalitat2.php" method="POST">
             <input id="number" name="guess" type="number">
-            <button type="submit" id="guess">Adivina</button>
+            <button type="submit" name="submit" value="guess">Adivina</button>
         </form>
-
+        <button onClick="window.history.back()">Enderrera</button>
     </div>
 </body>
 </html>
